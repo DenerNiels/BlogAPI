@@ -1,11 +1,17 @@
 using Blog.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
 
-builder.Services.AddControllers();
+builder
+    .Services
+    .AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    });
 builder.Services.AddDbContext<BlogDataContext>();
 
-app.MapControllers();
+var app = builder.Build();
 
+app.MapControllers();
 app.Run();
