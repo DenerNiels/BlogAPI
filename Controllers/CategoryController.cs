@@ -1,9 +1,9 @@
 ﻿using Blog.Data;
+using Blog.Extensions;
 using Blog.Models;
 using Blog.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 namespace Blog.Controllers
 {
@@ -56,7 +56,7 @@ namespace Blog.Controllers
 
         {
             if(!ModelState.IsValid)
-                return BadRequest();
+                return BadRequest(new ResultViewModel<Category>(ModelState.GetErrors()));
            try
             {
                 var category = new Category
@@ -68,15 +68,15 @@ namespace Blog.Controllers
                 };
                 await context.Categories.AddAsync(category);
                 await context.SaveChangesAsync();
-                return Created($"v1/categories/{category.Id}", category);
+                return Created($"v1/categories/{category.Id}", new ResultViewModel<Category>(category));
             }
             catch (DbUpdateException ex) 
             {
-                return StatusCode(500, "05X09 - Não foi possível incluir a categoria");
+                return StatusCode(500, new ResultViewModel<Category>("05X09 - Não foi possível incluir a categoria"));
             }
-            catch (Exception ex) 
+            catch 
             {
-                return StatusCode(500, "05X11 - Falha interna no servidor");
+                return StatusCode(500, new ResultViewModel<Category>("05X11 - Falha interna no servidor"));
             }
         }
 
@@ -100,15 +100,15 @@ namespace Blog.Controllers
                 context.Categories.Update(category);
                 await context.SaveChangesAsync();
 
-                return Ok(model);
+                return Ok(new ResultViewModel<Category>(category));
             }
             catch (DbUpdateException ex)
             {
-                return StatusCode(500, "05X08 - Não foi possível alterar a categoria");
+                return StatusCode(500, new ResultViewModel<Category>("05X08 - Não foi possível alterar a categoria") );
             }
-            catch (Exception ex)
+            catch 
             {
-                return StatusCode(500, "05X11 - Falha interna no servidor");
+                return StatusCode(500, new ResultViewModel<Category>("05X11 - Falha interna no servidor") );
             }
         }
 
@@ -124,20 +124,20 @@ namespace Blog.Controllers
                 .Categories
                 .FirstOrDefaultAsync(x => x.Id == id);
                 if (category == null)
-                    return NotFound();
+                    return NotFound(new ResultViewModel<Category>("Conteúdo não encontrado"));
 
                 context.Categories.Remove(category);
                 await context.SaveChangesAsync();
 
-                return Ok(category);
+                return Ok(new ResultViewModel<Category>(category));
             }
             catch (DbUpdateException ex)
             {
-                return StatusCode(500, "05X10 - Não foi possível DELETAR a categoria");
+                return StatusCode(500, new ResultViewModel<Category>("05X10 - Não foi possível DELETAR a categoria"));
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "05X11 - Falha interna no servidor");
+                return StatusCode(500, new ResultViewModel<Category>("05X11 - Falha interna no servidor"));
             }
         }
     }
