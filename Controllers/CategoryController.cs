@@ -2,29 +2,41 @@
 using Blog.Extensions;
 using Blog.Models;
 using Blog.ViewModels;
+using Blog.ViewModels.Categories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Blog.Controllers
 {
     public class CategoryController : ControllerBase
     {
         [HttpGet("v1/categories")]
-        public async Task<IActionResult> GetAsync(
-            [FromServices]BlogDataContext context)
+        public IActionResult GetAsync(
+            [FromServices] IMemoryCache cache,
+            [FromServices] BlogDataContext context)
         {
-            //User.Identity.IsAuthenticated
             try
             {
-                var categories = await context.Categories.ToListAsync();
+                var categories = cache.GetOrCreate("CategoriesCache", entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+                    return GetCategories(context);
+                });
+
                 return Ok(new ResultViewModel<List<Category>>(categories));
             }
-            catch (Exception ex)
+            catch
             {
-                return StatusCode(500, "05X04 - Falha interna no servidor");
+                return StatusCode(500, new ResultViewModel<List<Category>>("05X04 - Falha interna no servidor"));
             }
         }
-        
+
+        private List<Category> GetCategories(BlogDataContext context)
+        {
+            return context.Categories.ToList();
+        }
+
 
         [HttpGet("v1/categories/{id:int}")]
         public async Task<IActionResult> GetByIdAsync(
